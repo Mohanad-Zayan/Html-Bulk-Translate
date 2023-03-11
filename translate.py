@@ -3,7 +3,9 @@ import os
 import mtranslate
 from bs4 import BeautifulSoup
 
-def Transltor(folder): #Write html file direction ex: <C:/My Web Sites>
+
+#first Approach 
+def Transltor(folder): 
     for top,top_down,inside in os.walk(folder):
         os.chdir(top)
         for file in inside:
@@ -26,6 +28,37 @@ def Transltor(folder): #Write html file direction ex: <C:/My Web Sites>
                         f.write(str(soup))
 
 Transltor('put/your/directory/here')
-
-
-
+#-------------------------------------------------------------------------------
+# second approach
+folder = 'put/your/directory/here'
+for top, top_down, inside in os.walk(folder):
+    os.chdir(top)
+    for file in inside:
+        if file.endswith("html"):
+            print(file)
+            with open(file, "r", encoding="utf-8") as f:
+                html = f.read()
+                soup = BeautifulSoup(html, 'lxml')
+                tag1 = soup.new_tag("script")
+                tag2 = soup.new_tag("script")
+                tag2['src'] = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit'
+                tag2['type'] = 'text/javascript'
+                jscodestring = '''        
+                                    function googleTranslateElementInit() {
+                                        setCookie('googtrans', '/en/hi', 1);
+                                        new google.translate.TranslateElement({ pageLanguage: 'en'});
+                                    }
+                                    function setCookie(key, value, expiry) {
+                                        var expires = new Date();
+                                        expires.setTime(expires.getTime() + (expiry * 24 * 60 * 60 * 1000));
+                                        document.cookie = key + '=' + value + ';expires=' + expires.toUTCString();
+                                    }
+                            '''
+                tag1.append(jscodestring)
+                head = soup.find('head')
+                if head is None : continue
+                head.append(tag1)
+                head.append(tag2)
+                print(soup)
+                with open(file, "w", encoding="utf8") as f:
+                    f.write(str(soup))
